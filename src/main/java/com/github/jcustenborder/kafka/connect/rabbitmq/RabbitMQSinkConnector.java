@@ -30,8 +30,7 @@ import com.github.jcustenborder.kafka.connect.utils.config.Description;
 @Description("Connector is used to read data from a Kafka topic and publish it on a RabbitMQ exchange and routing key pair.")
 public class RabbitMQSinkConnector extends SinkConnector {
   Map<String, String> settings;
-  RabbitMQSinkConnectorConfig config;
-  SetUpRabbitMQ setup;
+  RabbitMQSinkConnectorConfig config;  
   
 
 
@@ -46,12 +45,12 @@ public class RabbitMQSinkConnector extends SinkConnector {
     this.settings = settings;
 
     if (this.config.autoCreate) {
-      this.setup = new SetUpRabbitMQ(this.config, settings.get(SinkConnector.TOPICS_CONFIG));
-      this.setup.SetUpConnection();
-      this.setup.SetUpExchange();
-      this.setup.CreateQueues();
-      this.setup.CreateBindings();
-      this.setup.CloseConnection();
+      SetUpRabbitMQ setup = new SetUpRabbitMQ(this.config, settings.get(SinkConnector.TOPICS_CONFIG));
+      setup.SetUpConnection();
+      setup.SetUpExchange();
+      setup.CreateQueues();
+      setup.CreateBindings();
+      setup.CloseConnection();
     }
   }
 
