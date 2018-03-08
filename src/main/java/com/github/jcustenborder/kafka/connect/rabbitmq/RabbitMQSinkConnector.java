@@ -31,6 +31,7 @@ import com.github.jcustenborder.kafka.connect.utils.config.Description;
 public class RabbitMQSinkConnector extends SinkConnector {
   Map<String, String> settings;
   RabbitMQSinkConnectorConfig config;
+  SetUpRabbitMQ setup;
   
 
 
@@ -43,6 +44,15 @@ public class RabbitMQSinkConnector extends SinkConnector {
   public void start(Map<String, String> settings) {
     this.config = new RabbitMQSinkConnectorConfig(settings);
     this.settings = settings;
+
+    if (this.config.autoCreate) {
+      this.setup = new SetUpRabbitMQ(this.config, settings.get(SinkConnector.TOPICS_CONFIG));
+      this.setup.SetUpConnection();
+      this.setup.SetUpExchange();
+      this.setup.CreateQueues();
+      this.setup.CreateBindings();
+      this.setup.CloseConnection();
+    }
   }
 
   @Override

@@ -35,11 +35,15 @@ public class RabbitMQSinkConnectorConfig extends RabbitMQConnectorConfig {
   public static final String ROUTING_KEY_CONF = "rabbitmq.routing.key";
   static final String ROUTING_KEY_DOC = "routing key used for publishing the messages.";
 
+  public static final String AUTO_CREATE_CONF = "rabbitmq.auto.create";
+  static final String AUTO_CREATE_DOC = "If true, the connecter will try to autocreate the exchange, queues and bindings while using the Kafka topic name as routeKey.";
+  
   //TODO: include other config variables here
 
   public final StructTemplate kafkaTopic;
   public final String exchange;
   public final String routingKey;
+  public final Boolean autoCreate;
 
   public RabbitMQSinkConnectorConfig(Map<String, String> settings) {
     super(config(), settings);
@@ -48,13 +52,15 @@ public class RabbitMQSinkConnectorConfig extends RabbitMQConnectorConfig {
     this.kafkaTopic.addTemplate(KAFKA_TOPIC_TEMPLATE, kafkaTopicFormat);
     this.exchange = this.getString(EXCHANGE_CONF);
     this.routingKey = this.getString(ROUTING_KEY_CONF);
+    this.autoCreate = settings.containsKey(AUTO_CREATE_CONF) ? this.getBoolean(AUTO_CREATE_CONF) : false;
   }
 
   public static ConfigDef config() {
     return RabbitMQConnectorConfig.config()
         .define(TOPIC_CONF, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, TOPIC_DOC)
         .define(EXCHANGE_CONF, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, EXCHANGE_DOC)
-        .define(ROUTING_KEY_CONF, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, ROUTING_KEY_DOC);
+        .define(ROUTING_KEY_CONF, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, ROUTING_KEY_DOC)
+        .define(AUTO_CREATE_CONF, ConfigDef.Type.BOOLEAN, ConfigDef.Importance.MEDIUM, AUTO_CREATE_DOC);
   }
 
 }

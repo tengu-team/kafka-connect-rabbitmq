@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -29,12 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.jcustenborder.kafka.connect.utils.VersionUtil;
+import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 public class RabbitMQSinkTask extends SinkTask {
-  private static final Logger log = LoggerFactory.getLogger(RabbitMQSourceTask.class);
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQSinkTask.class);
   RabbitMQSinkConnectorConfig config;
 
   Channel channel;
@@ -50,11 +53,12 @@ public class RabbitMQSinkTask extends SinkTask {
   public void put(Collection<SinkRecord> sinkRecords) {
     for (SinkRecord record : sinkRecords) {
       log.trace("current sinkRecord value: " + record.value());
-      if (!(record.value() instanceof byte[])) {
-        throw new ConnectException("the value of the record has an invalid type (must be of type byte[])");
-      }
+      
+      String json = new Gson().toJson(record.value());
+      String route = this.config.autoCreate ? record.topic() : this.config.routingKey;
+
       try {
-        channel.basicPublish(this.config.exchange, this.config.routingKey, null, (byte[]) record.value());
+        channel.basicPublish(this.config.exchange, route, null, json.getBytes());
       } catch (IOException e) {
         log.error("There was an error while publishing the outgoing message to RabbitMQ");
         throw new RetriableException(e);
@@ -90,4 +94,10 @@ public class RabbitMQSinkTask extends SinkTask {
     }
   }
 
+
+  @Override
+  public void flush(Map<TopicPartition, OffsetAndMetadata> map) {
+    // DO NOTHING
+    // Necessary for kafka version 0.10.1 !
+  }
 }
