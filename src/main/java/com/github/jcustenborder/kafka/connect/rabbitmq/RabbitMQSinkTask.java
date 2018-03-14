@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.jcustenborder.kafka.connect.utils.VersionUtil;
-import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -53,12 +52,12 @@ public class RabbitMQSinkTask extends SinkTask {
   public void put(Collection<SinkRecord> sinkRecords) {
     for (SinkRecord record : sinkRecords) {
       log.trace("current sinkRecord value: " + record.value());
-      
-      String json = new Gson().toJson(record.value());
+      if (!(record.value() instanceof byte[])) {
+        throw new ConnectException("the value of the record has an invalid type (must be of type byte[])");
+      }
       String route = this.config.autoCreate ? record.topic() : this.config.routingKey;
-
       try {
-        channel.basicPublish(this.config.exchange, route, null, json.getBytes());
+        channel.basicPublish(this.config.exchange, route, null, (byte[]) record.value());
       } catch (IOException e) {
         log.error("There was an error while publishing the outgoing message to RabbitMQ");
         throw new RetriableException(e);
